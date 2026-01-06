@@ -203,7 +203,7 @@ function TopicsPage() {
         <header className="text-center mb-8 sm:mb-12">
           <h1 className="text-3xl sm:text-4xl font-semibold mb-3 break-words">{section.name}</h1>
           <p className="text-[var(--color-text-muted)] text-sm sm:text-base">
-            {topics.length} {topics.length === 1 ? 'тема' : 'тем'}
+            {topics.length} {topics.length === 1 ? 'раздел' : 'раздел/а/ов'}
           </p>
         </header>
 
@@ -252,7 +252,7 @@ function TopicsPage() {
 
           {topics.length === 0 && (
             <p className="text-center text-[var(--color-text-muted)] py-8 sm:py-12 text-base sm:text-lg">
-              Пока нет тем. Добавьте первую!
+              Пока нет разделов. Добавьте первый!
             </p>
           )}
         </div>
@@ -265,14 +265,14 @@ function TopicsPage() {
           height={220}
           customStyles={{ padding: '20px' }}
         >
-          <h2 className="text-lg sm:text-xl font-medium mb-4 sm:mb-5">Новая тема</h2>
+          <h2 className="text-lg sm:text-xl font-medium mb-4 sm:mb-5">Новый раздел</h2>
 
           <input
             type="text"
             value={newTopicName}
             onChange={(e) => setNewTopicName(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Название темы..."
+            placeholder="Название раздела..."
             className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl
                        bg-[var(--color-bg)] border border-[var(--color-border)]
                        text-white text-base sm:text-lg placeholder-[var(--color-text-muted)]
@@ -287,7 +287,7 @@ function TopicsPage() {
                        active:scale-95 transition-all duration-200
                        font-medium text-base sm:text-lg cursor-pointer"
           >
-            Добавить
+            Добавить раздел
           </button>
         </Rodal>
       </div>

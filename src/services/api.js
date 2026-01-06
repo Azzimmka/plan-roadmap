@@ -130,6 +130,10 @@ export async function saveData(data) {
     }
 
     const result = await response.json()
+
+    // Update cache with saved data
+    setCache(data)
+
     return result.record
 
   } catch (error) {

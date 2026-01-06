@@ -168,7 +168,7 @@ function SectionsPage() {
         <header className="text-center mb-8 sm:mb-12">
           <h1 className="text-3xl sm:text-4xl font-semibold mb-3 break-words">{subject.name}</h1>
           <p className="text-[var(--color-text-muted)] text-sm sm:text-base">
-            {sections.length} {sections.length === 1 ? 'раздел' : 'разделов'}
+            {sections.length} {sections.length === 1 ? 'тема' : 'тем/ы'}
           </p>
         </header>
 
@@ -181,7 +181,7 @@ function SectionsPage() {
                      hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]
                      active:scale-95 transition-all duration-200 cursor-pointer"
         >
-          + Добавить Тему
+          + Добавить тему
         </button>
 
         {/* ===== СПИСОК РАЗДЕЛОВ ===== */}
@@ -216,14 +216,14 @@ function SectionsPage() {
               </div>
 
               <p className="text-sm sm:text-base text-[var(--color-text-muted)] mt-2">
-                {section.topics?.length || 0} тем
+                {section.topics?.length || 0} раздел/а
               </p>
             </div>
           ))}
 
           {sections.length === 0 && (
             <p className="text-center text-[var(--color-text-muted)] py-8 sm:py-12 text-base sm:text-lg">
-              Пока нет разделов. Добавьте первый!
+              Пока нет тем. Добавьте первую!
             </p>
           )}
         </div>
@@ -236,14 +236,14 @@ function SectionsPage() {
           height={220}
           customStyles={{ padding: '20px' }}
         >
-          <h2 className="text-lg sm:text-xl font-medium mb-4 sm:mb-5">Новый раздел</h2>
+          <h2 className="text-lg sm:text-xl font-medium mb-4 sm:mb-5">Новая тема</h2>
 
           <input
             type="text"
             value={newSectionName}
             onChange={(e) => setNewSectionName(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Название раздела..."
+            placeholder="Название темы..."
             className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl
                        bg-[var(--color-bg)] border border-[var(--color-border)]
                        text-white text-base sm:text-lg placeholder-[var(--color-text-muted)]
@@ -258,7 +258,7 @@ function SectionsPage() {
                        active:scale-95 transition-all duration-200
                        font-medium text-base sm:text-lg cursor-pointer"
           >
-            Добавить
+            Добавить тему
           </button>
         </Rodal>
       </div>
