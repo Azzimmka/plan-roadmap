@@ -21,15 +21,23 @@ export function SortableSectionItem({ subjectId, section, handleDeleteSection })
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
       className="bg-[var(--color-bg-card)] rounded-xl sm:rounded-2xl p-4 sm:p-5
                  border border-[var(--color-border)]
                  hover:border-[var(--color-text-muted)]
-                 active:scale-[0.98] sm:hover:scale-[1.02]
                  transition-all duration-200"
     >
       <div className="flex items-center justify-between gap-3">
+        {/* Иконка для перетаскивания — только здесь listeners! */}
+        <button
+          {...attributes}
+          {...listeners}
+          className="text-[var(--color-text-muted)] hover:text-[var(--color-accent)]
+                     cursor-grab active:cursor-grabbing px-1 touch-none"
+          aria-label="Перетащить"
+        >
+          ⋮⋮
+        </button>
+
         <Link
           to={`/subject/${subjectId}/section/${section.id}`}
           className="text-lg sm:text-xl font-medium hover:text-[var(--color-accent)]
