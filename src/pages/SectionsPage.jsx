@@ -12,9 +12,19 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import Modal from '../components/Modal'
+import {
+  DndContext,
+  closestCenter
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy
+} from '@dnd-kit/sortable'
 
 // Импортируем функции для работы с API
 import { getData, saveData, getCachedData } from '../services/api'
+import { SortableSectionItem } from '../components/SortableSectionItem'
 
 function SectionsPage() {
   const { subjectId } = useParams()
@@ -149,6 +159,19 @@ function SectionsPage() {
     )
   }
 
+  async function handleDragEnd(event) {
+    const { active, over } = event
+    if (active.id !== over.id) {
+      setSections((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id)
+        const newIndex = items.findIndex((item) => item.id === over.id)
+        const newItems = arrayMove(items, oldIndex, newIndex)
+        saveToServer(newItems)
+        return newItems
+      })
+    }
+  }
+
   return (
     <div className="min-h-screen p-4 sm:p-6 md:p-8 pt-8 sm:pt-12">
       <div className="max-w-xl mx-auto w-full">
@@ -184,48 +207,32 @@ function SectionsPage() {
         </button>
 
         {/* ===== СПИСОК РАЗДЕЛОВ ===== */}
-        <div className="space-y-3 sm:space-y-4">
-          {sections.map(section => (
-            <div
-              key={section.id}
-              className="bg-[var(--color-bg-card)] rounded-xl sm:rounded-2xl p-4 sm:p-5
-                         border border-[var(--color-border)]
-                         hover:border-[var(--color-text-muted)]
-                         active:scale-[0.98] sm:hover:scale-[1.02]
-                         transition-all duration-200"
+        <DndContext
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="space-y-3 sm:space-y-4">
+            <SortableContext
+              items={sections}
+              strategy={verticalListSortingStrategy}
             >
-              <div className="flex items-center justify-between gap-3">
-                <Link
-                  to={`/subject/${subjectId}/section/${section.id}`}
-                  className="text-lg sm:text-xl font-medium hover:text-[var(--color-accent)]
-                             transition-colors flex-1 min-w-0 truncate"
-                >
-                  {section.name}
-                </Link>
+              {sections.map(section => (
+                <SortableSectionItem
+                  key={section.id}
+                  section={section}
+                  subjectId={subjectId}
+                  handleDeleteSection={handleDeleteSection}
+                />
+              ))}
+            </SortableContext>
+          </div>
+        </DndContext>
 
-                <button
-                  onClick={() => handleDeleteSection(section.id)}
-                  className="text-[var(--color-text-muted)] hover:text-[var(--color-danger)]
-                             active:text-[var(--color-danger)]
-                             transition-colors px-2 sm:px-3 py-2 text-sm cursor-pointer
-                             shrink-0"
-                >
-                  Удалить
-                </button>
-              </div>
-
-              <p className="text-sm sm:text-base text-[var(--color-text-muted)] mt-2">
-                {section.topics?.length || 0} раздел/а
-              </p>
-            </div>
-          ))}
-
-          {sections.length === 0 && (
-            <p className="text-center text-[var(--color-text-muted)] py-8 sm:py-12 text-base sm:text-lg">
-              Пока нет тем. Добавьте первую!
-            </p>
-          )}
-        </div>
+        {sections.length === 0 && (
+          <p className="text-center text-[var(--color-text-muted)] py-8 sm:py-12 text-base sm:text-lg">
+            Пока нет тем. Добавьте первую!
+          </p>
+        )}
 
         {/* ===== МОДАЛКА ===== */}
         <Modal

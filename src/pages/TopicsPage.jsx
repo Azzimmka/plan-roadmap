@@ -15,9 +15,19 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import Modal from '../components/Modal'
+import {
+  DndContext,
+  closestCenter
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy
+} from '@dnd-kit/sortable'
 
 // Импортируем функции для работы с API
 import { getData, saveData, getCachedData } from '../services/api'
+import { SortableTopicItem } from '../components/SortableTopicItem'
 
 function TopicsPage() {
   const { subjectId, sectionId } = useParams()
@@ -169,6 +179,19 @@ function TopicsPage() {
     )
   }
 
+  async function handleDragEnd(event) {
+    const { active, over } = event
+    if (active.id !== over.id) {
+      setTopics((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id)
+        const newIndex = items.findIndex((item) => item.id === over.id)
+        const newItems = arrayMove(items, oldIndex, newIndex)
+        saveToServer(newItems)
+        return newItems
+      })
+    }
+  }
+
   return (
     <div className="min-h-screen p-4 sm:p-6 md:p-8 pt-8 sm:pt-12">
       <div className="max-w-xl mx-auto w-full">
@@ -219,42 +242,33 @@ function TopicsPage() {
         </button>
 
         {/* ===== СПИСОК ТЕМ ===== */}
-        <div className="space-y-3 sm:space-y-4">
-          {topics.map((topic, index) => (
-            <div
-              key={topic.id}
-              className="bg-[var(--color-bg-card)] rounded-xl sm:rounded-2xl p-4 sm:p-5
-                         border border-[var(--color-border)]
-                         hover:border-[var(--color-text-muted)]
-                         active:scale-[0.98] sm:hover:scale-[1.02]
-                         transition-all duration-200"
+        <DndContext
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="space-y-3 sm:space-y-4">
+            <SortableContext
+              items={topics}
+              strategy={verticalListSortingStrategy}
             >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                  <span className="text-[var(--color-accent)] text-base sm:text-lg font-medium w-6 sm:w-8 shrink-0">
-                    {index + 1}.
-                  </span>
-                  <span className="text-lg sm:text-xl truncate">{topic.name}</span>
-                </div>
+              {topics.map((topic, index) => (
+                <SortableTopicItem
+                  key={topic.id}
+                  topic={topic}
+                  index={index}
+                  handleDeleteTopic={handleDeleteTopic}
+                />
+              ))}
+            </SortableContext>
+          </div>
+        </DndContext>
 
-                <button
-                  onClick={() => handleDeleteTopic(topic.id)}
-                  className="text-[var(--color-text-muted)] hover:text-[var(--color-danger)]
-                             active:text-[var(--color-danger)]
-                             transition-colors px-2 sm:px-3 py-2 text-sm cursor-pointer shrink-0"
-                >
-                  Удалить
-                </button>
-              </div>
-            </div>
-          ))}
+        {topics.length === 0 && (
+          <p className="text-center text-[var(--color-text-muted)] py-8 sm:py-12 text-base sm:text-lg">
+            Пока нет разделов. Добавьте первый!
+          </p>
+        )}
 
-          {topics.length === 0 && (
-            <p className="text-center text-[var(--color-text-muted)] py-8 sm:py-12 text-base sm:text-lg">
-              Пока нет разделов. Добавьте первый!
-            </p>
-          )}
-        </div>
 
         {/* ===== МОДАЛКА ===== */}
         <Modal
