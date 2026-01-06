@@ -1,7 +1,20 @@
+/*
+  =========================================
+  SORTABLE SUBJECT ITEM — перетаскиваемая карточка предмета
+  =========================================
+
+  Использует @dnd-kit для drag-and-drop.
+
+  ВАЖНО: listeners применяются ТОЛЬКО к иконке перетаскивания (⋮⋮),
+  а не ко всему элементу — иначе Link не будет работать!
+*/
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Link } from 'react-router-dom';
+
+// Импортируем функцию склонения для правильной грамматики
+import { pluralizeSections } from '../utils/pluralize';
 
 export function SortableSubjectItem({ subject, handleDeleteSubject }) {
   const {
@@ -21,15 +34,23 @@ export function SortableSubjectItem({ subject, handleDeleteSubject }) {
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
       className="bg-[var(--color-bg-card)] rounded-xl sm:rounded-2xl p-4 sm:p-5
                  border border-[var(--color-border)]
                  hover:border-[var(--color-text-muted)]
-                 active:scale-[0.98] sm:hover:scale-[1.02]
                  transition-all duration-200"
     >
       <div className="flex items-center justify-between gap-3">
+        {/* Иконка для перетаскивания — только здесь listeners! */}
+        <button
+          {...attributes}
+          {...listeners}
+          className="text-[var(--color-text-muted)] hover:text-[var(--color-accent)]
+                     cursor-grab active:cursor-grabbing px-1 touch-none"
+          aria-label="Перетащить"
+        >
+          ⋮⋮
+        </button>
+
         <Link
           to={`/subject/${subject.id}`}
           className="text-lg sm:text-xl font-medium hover:text-[var(--color-accent)]
@@ -50,7 +71,7 @@ export function SortableSubjectItem({ subject, handleDeleteSubject }) {
       </div>
 
       <p className="text-sm sm:text-base text-[var(--color-text-muted)] mt-2">
-        {subject.sections?.length === 1 ? '1 тема' : `${subject.sections?.length} темы`}
+        {pluralizeSections(subject.sections?.length || 0)}
       </p>
     </div>
   );

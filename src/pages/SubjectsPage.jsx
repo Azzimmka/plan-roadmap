@@ -32,6 +32,9 @@ import {
 import { getSubjects, saveSubjects, getCachedData } from '../services/api'
 import { SortableSubjectItem } from '../components/SortableSubjectItem'
 
+// Импортируем функцию склонения для правильной грамматики
+import { pluralizeSubjects } from '../utils/pluralize'
+
 function SubjectsPage() {
   // Состояния
   const [subjects, setSubjects] = useState([])
@@ -166,7 +169,7 @@ function SubjectsPage() {
         <header className="text-center mb-8 sm:mb-12">
           <h1 className="text-3xl sm:text-4xl font-semibold mb-3">Roadmap</h1>
           <p className="text-[var(--color-text-muted)] text-sm sm:text-base">
-            {subjects.length} {subjects.length === 1 ? 'предмет' : 'предметов'}
+            {pluralizeSubjects(subjects.length)}
           </p>
         </header>
 

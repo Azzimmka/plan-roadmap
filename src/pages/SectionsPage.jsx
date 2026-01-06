@@ -26,6 +26,9 @@ import {
 import { getData, saveData, getCachedData } from '../services/api'
 import { SortableSectionItem } from '../components/SortableSectionItem'
 
+// Импортируем функцию склонения для правильной грамматики
+import { pluralizeSections } from '../utils/pluralize'
+
 function SectionsPage() {
   const { subjectId } = useParams()
   const navigate = useNavigate()
@@ -190,7 +193,7 @@ function SectionsPage() {
         <header className="text-center mb-8 sm:mb-12">
           <h1 className="text-3xl sm:text-4xl font-semibold mb-3 break-words">{subject.name}</h1>
           <p className="text-[var(--color-text-muted)] text-sm sm:text-base">
-            {sections.length} {sections.length === 1 ? 'тема' : 'тем/ы'}
+            {pluralizeSections(sections.length)}
           </p>
         </header>
 

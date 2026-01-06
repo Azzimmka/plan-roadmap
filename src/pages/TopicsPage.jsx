@@ -29,6 +29,9 @@ import {
 import { getData, saveData, getCachedData } from '../services/api'
 import { SortableTopicItem } from '../components/SortableTopicItem'
 
+// Импортируем функцию склонения для правильной грамматики
+import { pluralizeTopics } from '../utils/pluralize'
+
 function TopicsPage() {
   const { subjectId, sectionId } = useParams()
   const navigate = useNavigate()
@@ -225,7 +228,7 @@ function TopicsPage() {
         <header className="text-center mb-8 sm:mb-12">
           <h1 className="text-3xl sm:text-4xl font-semibold mb-3 break-words">{section.name}</h1>
           <p className="text-[var(--color-text-muted)] text-sm sm:text-base">
-            {topics.length} {topics.length === 1 ? 'раздел' : 'раздел/а/ов'}
+            {pluralizeTopics(topics.length)}
           </p>
         </header>
 

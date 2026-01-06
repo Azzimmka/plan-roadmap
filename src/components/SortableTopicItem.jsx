@@ -1,3 +1,11 @@
+/*
+  =========================================
+  SORTABLE TOPIC ITEM — перетаскиваемая карточка раздела
+  =========================================
+
+  ВАЖНО: listeners применяются ТОЛЬКО к иконке перетаскивания (⋮⋮),
+  а не ко всему элементу — иначе кнопка удаления не будет работать!
+*/
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -20,15 +28,23 @@ export function SortableTopicItem({ topic, index, handleDeleteTopic }) {
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
       className="bg-[var(--color-bg-card)] rounded-xl sm:rounded-2xl p-4 sm:p-5
                  border border-[var(--color-border)]
                  hover:border-[var(--color-text-muted)]
-                 active:scale-[0.98] sm:hover:scale-[1.02]
                  transition-all duration-200"
     >
       <div className="flex items-center justify-between gap-3">
+        {/* Иконка для перетаскивания — только здесь listeners! */}
+        <button
+          {...attributes}
+          {...listeners}
+          className="text-[var(--color-text-muted)] hover:text-[var(--color-accent)]
+                     cursor-grab active:cursor-grabbing px-1 touch-none"
+          aria-label="Перетащить"
+        >
+          ⋮⋮
+        </button>
+
         <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
           <span className="text-[var(--color-accent)] text-base sm:text-lg font-medium w-6 sm:w-8 shrink-0">
             {index + 1}.
