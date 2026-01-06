@@ -26,13 +26,13 @@ export function SortableSectionItem({ subjectId, section, handleDeleteSection })
                  hover:border-[var(--color-text-muted)]
                  transition-all duration-200"
     >
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-start justify-between gap-3">
         {/* Иконка для перетаскивания — только здесь listeners! */}
         <button
           {...attributes}
           {...listeners}
           className="text-[var(--color-text-muted)] hover:text-[var(--color-accent)]
-                     cursor-grab active:cursor-grabbing px-1 touch-none"
+                     cursor-grab active:cursor-grabbing px-1 pt-1 touch-none shrink-0"
           aria-label="Перетащить"
         >
           ⋮⋮
@@ -41,7 +41,7 @@ export function SortableSectionItem({ subjectId, section, handleDeleteSection })
         <Link
           to={`/subject/${subjectId}/section/${section.id}`}
           className="text-lg sm:text-xl font-medium hover:text-[var(--color-accent)]
-                     transition-colors flex-1 min-w-0 truncate"
+                     transition-colors flex-1 min-w-0 break-all"
         >
           {section.name}
         </Link>
@@ -50,7 +50,7 @@ export function SortableSectionItem({ subjectId, section, handleDeleteSection })
           onClick={() => handleDeleteSection(section.id)}
           className="text-[var(--color-text-muted)] hover:text-[var(--color-danger)]
                      active:text-[var(--color-danger)]
-                     transition-colors px-2 sm:px-3 py-2 text-sm cursor-pointer
+                     transition-colors px-2 sm:px-3 pt-1 text-sm cursor-pointer
                      shrink-0"
         >
           Удалить
