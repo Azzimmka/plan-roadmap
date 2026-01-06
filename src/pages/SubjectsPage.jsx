@@ -17,6 +17,8 @@
 
 import { useState, useEffect } from 'react'
 import Modal from '../components/Modal'
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal'
+import AlertModal from '../components/AlertModal'
 import {
   DndContext,
   closestCenter
@@ -40,6 +42,10 @@ function SubjectsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newSubjectName, setNewSubjectName] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+
+  // Состояния для модалок удаления и уведомлений
+  const [deleteModal, setDeleteModal] = useState({ visible: false, subject: null })
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', type: 'error' })
 
   /*
     =========================================
@@ -104,13 +110,24 @@ function SubjectsPage() {
       // Если ошибка — откатываем изменения
       console.error('Ошибка сохранения:', error)
       setSubjects(subjects)  // Возвращаем старые данные
-      alert('Ошибка сохранения. Попробуйте ещё раз.')
+      setAlertModal({
+        visible: true,
+        title: 'Ошибка',
+        message: 'Не удалось сохранить. Попробуйте ещё раз.',
+        type: 'error'
+      })
     }
   }
 
-  // DELETE — удаление предмета
-  const handleDeleteSubject = async (subjectId) => {
-    if (!window.confirm('Удалить предмет?')) return
+  // DELETE — открытие модалки удаления
+  const handleDeleteSubject = (subjectId) => {
+    const subject = subjects.find(s => s.id === subjectId)
+    setDeleteModal({ visible: true, subject })
+  }
+
+  // Подтверждение удаления (после ввода пароля)
+  const confirmDeleteSubject = async (subjectId) => {
+    if (!subjectId) return
 
     const updatedSubjects = subjects.filter(subject => subject.id !== subjectId)
 
@@ -122,7 +139,12 @@ function SubjectsPage() {
     } catch (error) {
       console.error('Ошибка удаления:', error)
       setSubjects(subjects)
-      alert('Ошибка удаления. Попробуйте ещё раз.')
+      setAlertModal({
+        visible: true,
+        title: 'Ошибка',
+        message: 'Не удалось удалить. Попробуйте ещё раз.',
+        type: 'error'
+      })
     }
   }
 
@@ -246,6 +268,25 @@ function SubjectsPage() {
             Добавить
           </button>
         </Modal>
+
+        {/* Модалка подтверждения удаления */}
+        <ConfirmDeleteModal
+          visible={deleteModal.visible}
+          onClose={() => setDeleteModal({ visible: false, subject: null })}
+          onConfirm={confirmDeleteSubject}
+          itemId={deleteModal.subject?.id}
+          itemName={deleteModal.subject?.name || ''}
+          itemType="предмет"
+        />
+
+        {/* Модалка уведомлений */}
+        <AlertModal
+          visible={alertModal.visible}
+          onClose={() => setAlertModal({ ...alertModal, visible: false })}
+          title={alertModal.title}
+          message={alertModal.message}
+          type={alertModal.type}
+        />
       </div>
     </div>
   )

@@ -15,6 +15,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import Modal from '../components/Modal'
+import RichTextInput from '../components/RichTextInput'
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal'
+import AlertModal from '../components/AlertModal'
 import {
   DndContext,
   closestCenter
@@ -44,6 +47,10 @@ function TopicsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newTopicName, setNewTopicName] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+
+  // Состояния для модалок удаления и уведомлений
+  const [deleteModal, setDeleteModal] = useState({ visible: false, topic: null })
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', type: 'error' })
 
   // Загрузка данных с кэшированием
   useEffect(() => {
@@ -138,13 +145,24 @@ function TopicsPage() {
     } catch (error) {
       console.error('Ошибка сохранения:', error)
       setTopics(topics)
-      alert('Ошибка сохранения. Попробуйте ещё раз.')
+      setAlertModal({
+        visible: true,
+        title: 'Ошибка',
+        message: 'Не удалось сохранить. Попробуйте ещё раз.',
+        type: 'error'
+      })
     }
   }
 
-  // DELETE — удаление темы
-  const handleDeleteTopic = async (topicId) => {
-    if (!window.confirm('Удалить тему?')) return
+  // DELETE — открытие модалки удаления
+  const handleDeleteTopic = (topicId) => {
+    const topic = topics.find(t => t.id === topicId)
+    setDeleteModal({ visible: true, topic })
+  }
+
+  // Подтверждение удаления (после ввода пароля)
+  const confirmDeleteTopic = async (topicId) => {
+    if (!topicId) return
 
     const updatedTopics = topics.filter(topic => topic.id !== topicId)
 
@@ -155,13 +173,12 @@ function TopicsPage() {
     } catch (error) {
       console.error('Ошибка удаления:', error)
       setTopics(topics)
-      alert('Ошибка удаления. Попробуйте ещё раз.')
-    }
-  }
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      handleAddTopic()
+      setAlertModal({
+        visible: true,
+        title: 'Ошибка',
+        message: 'Не удалось удалить. Попробуйте ещё раз.',
+        type: 'error'
+      })
     }
   }
 
@@ -278,21 +295,16 @@ function TopicsPage() {
           visible={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           width={Math.min(450, window.innerWidth - 32)}
-          height={220}
+          height="auto"
           customStyles={{ padding: '20px' }}
         >
           <h2 className="text-lg sm:text-xl font-medium mb-4 sm:mb-5">Новый раздел</h2>
 
-          <input
-            type="text"
+          <RichTextInput
             value={newTopicName}
-            onChange={(e) => setNewTopicName(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Название раздела..."
-            className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl
-                       bg-[var(--color-bg)] border border-[var(--color-border)]
-                       text-white text-base sm:text-lg placeholder-[var(--color-text-muted)]
-                       focus:border-[var(--color-accent)] focus:outline-none"
+            onChange={setNewTopicName}
+            onSubmit={handleAddTopic}
+            placeholder="Введите текст раздела...&#10;&#10;Выделите текст для форматирования"
             autoFocus
           />
 
@@ -306,6 +318,25 @@ function TopicsPage() {
             Добавить раздел
           </button>
         </Modal>
+
+        {/* Модалка подтверждения удаления */}
+        <ConfirmDeleteModal
+          visible={deleteModal.visible}
+          onClose={() => setDeleteModal({ visible: false, topic: null })}
+          onConfirm={confirmDeleteTopic}
+          itemId={deleteModal.topic?.id}
+          itemName={deleteModal.topic?.name || ''}
+          itemType="раздел"
+        />
+
+        {/* Модалка уведомлений */}
+        <AlertModal
+          visible={alertModal.visible}
+          onClose={() => setAlertModal({ ...alertModal, visible: false })}
+          title={alertModal.title}
+          message={alertModal.message}
+          type={alertModal.type}
+        />
       </div>
     </div>
   )

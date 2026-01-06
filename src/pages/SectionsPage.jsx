@@ -12,6 +12,8 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import Modal from '../components/Modal'
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal'
+import AlertModal from '../components/AlertModal'
 import {
   DndContext,
   closestCenter
@@ -40,6 +42,10 @@ function SectionsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newSectionName, setNewSectionName] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+
+  // Состояния для модалок удаления и уведомлений
+  const [deleteModal, setDeleteModal] = useState({ visible: false, section: null })
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', type: 'error' })
 
   // Загрузка данных с кэшированием
   useEffect(() => {
@@ -118,13 +124,24 @@ function SectionsPage() {
     } catch (error) {
       console.error('Ошибка сохранения:', error)
       setSections(sections)
-      alert('Ошибка сохранения. Попробуйте ещё раз.')
+      setAlertModal({
+        visible: true,
+        title: 'Ошибка',
+        message: 'Не удалось сохранить. Попробуйте ещё раз.',
+        type: 'error'
+      })
     }
   }
 
-  // DELETE — удаление раздела
-  const handleDeleteSection = async (sectionId) => {
-    if (!window.confirm('Удалить раздел?')) return
+  // DELETE — открытие модалки удаления
+  const handleDeleteSection = (sectionId) => {
+    const section = sections.find(s => s.id === sectionId)
+    setDeleteModal({ visible: true, section })
+  }
+
+  // Подтверждение удаления (после ввода пароля)
+  const confirmDeleteSection = async (sectionId) => {
+    if (!sectionId) return
 
     const updatedSections = sections.filter(section => section.id !== sectionId)
 
@@ -135,7 +152,12 @@ function SectionsPage() {
     } catch (error) {
       console.error('Ошибка удаления:', error)
       setSections(sections)
-      alert('Ошибка удаления. Попробуйте ещё раз.')
+      setAlertModal({
+        visible: true,
+        title: 'Ошибка',
+        message: 'Не удалось удалить. Попробуйте ещё раз.',
+        type: 'error'
+      })
     }
   }
 
@@ -270,6 +292,25 @@ function SectionsPage() {
             Добавить тему
           </button>
         </Modal>
+
+        {/* Модалка подтверждения удаления */}
+        <ConfirmDeleteModal
+          visible={deleteModal.visible}
+          onClose={() => setDeleteModal({ visible: false, section: null })}
+          onConfirm={confirmDeleteSection}
+          itemId={deleteModal.section?.id}
+          itemName={deleteModal.section?.name || ''}
+          itemType="тему"
+        />
+
+        {/* Модалка уведомлений */}
+        <AlertModal
+          visible={alertModal.visible}
+          onClose={() => setAlertModal({ ...alertModal, visible: false })}
+          title={alertModal.title}
+          message={alertModal.message}
+          type={alertModal.type}
+        />
       </div>
     </div>
   )
