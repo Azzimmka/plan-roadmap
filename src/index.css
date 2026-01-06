@@ -1,68 +1,74 @@
+/*
+  =========================================
+  ГЛАВНЫЙ ФАЙЛ СТИЛЕЙ — index.css
+  =========================================
+
+  Порядок важен:
+  1. Сначала @import "tailwindcss"
+  2. Потом наши кастомные стили
+*/
+
+/* TailwindCSS — подключаем библиотеку */
+@import "tailwindcss";
+
+/*
+  :root — корневой элемент, здесь определяем CSS переменные
+  Эти переменные доступны везде в приложении через var(--название)
+*/
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  --color-bg: #262624;
+  --color-bg-card: #2e2e2c;
+  --color-accent: #d97757;
+  --color-accent-hover: #e58a6b;
+  --color-text: #ffffff;
+  --color-text-muted: #a8a8a6;
+  --color-border: #3d3d3b;
+  --color-danger: #e55b5b;
+}
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+/*
+  Базовые стили для body
+*/
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+/* Контейнер React приложения */
+#root {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/*
+  =========================================
+  СТИЛИ ДЛЯ RODAL (модальные окна)
+  =========================================
+*/
+.rodal-dialog {
+  background-color: var(--color-bg-card) !important;
+  border-radius: 16px !important;
+  padding: 24px !important;
+  border: 1px solid var(--color-border) !important;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+.rodal-close {
+  top: 16px !important;
+  right: 16px !important;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+.rodal-close::before,
+.rodal-close::after {
+  background-color: var(--color-text-muted) !important;
+}
+
+.rodal-close:hover::before,
+.rodal-close:hover::after {
+  background-color: var(--color-text) !important;
 }
