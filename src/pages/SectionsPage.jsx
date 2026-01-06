@@ -262,10 +262,10 @@ function SectionsPage() {
 
           <button
             onClick={handleAddSection}
-            className="mt-4 sm:mt-5 w-full p-3 sm:p-4 rounded-lg sm:rounded-xl
+            className="mt-4 sm:mt-5 w-full p-4 sm:p-4 rounded-lg sm:rounded-xl
                        bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]
                        active:scale-95 transition-all duration-200
-                       font-medium text-base sm:text-lg cursor-pointer"
+                       font-medium text-base sm:text-lg cursor-pointer shadow-2xl shadow-[var(--color-accent)]"
           >
             Добавить тему
           </button>

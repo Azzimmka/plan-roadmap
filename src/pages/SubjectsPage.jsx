@@ -167,6 +167,7 @@ function SubjectsPage() {
         {/* ===== ЗАГОЛОВОК ===== */}
         <header className="text-center mb-8 sm:mb-12">
           <h1 className="text-3xl sm:text-4xl font-semibold mb-3">Roadmap</h1>
+          <p className='bg-[#d97757] text-red-100 py-1 shadow-lg shadow-[#d97757] w-[220px] block m-auto my-4 rounded-xl'>Не удаляйте предметы!</p>
           <p className="text-[var(--color-text-muted)] text-sm sm:text-base">
             {pluralizeSubjects(subjects.length)}
           </p>
