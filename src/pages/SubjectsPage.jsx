@@ -17,8 +17,7 @@
 
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import Rodal from 'rodal'
-import 'rodal/lib/rodal.css'
+import Modal from '../components/Modal'
 
 // Импортируем функции для работы с API
 import { getSubjects, saveSubjects, getCachedData } from '../services/api'
@@ -195,7 +194,7 @@ function SubjectsPage() {
               </div>
 
               <p className="text-sm sm:text-base text-[var(--color-text-muted)] mt-2">
-                {subject.sections?.length === 1 ? '1 тема' : `${subject.sections?.length} темы`} 
+                {subject.sections?.length === 1 ? '1 тема' : `${subject.sections?.length} темы`}
               </p>
             </div>
           ))}
@@ -208,7 +207,7 @@ function SubjectsPage() {
         </div>
 
         {/* ===== МОДАЛЬНОЕ ОКНО ===== */}
-        <Rodal
+        <Modal
           visible={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           width={Math.min(450, window.innerWidth - 32)}
@@ -239,7 +238,7 @@ function SubjectsPage() {
           >
             Добавить
           </button>
-        </Rodal>
+        </Modal>
       </div>
     </div>
   )

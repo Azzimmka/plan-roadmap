@@ -48,27 +48,82 @@ body {
 
 /*
   =========================================
-  СТИЛИ ДЛЯ RODAL (модальные окна)
+  СТИЛИ ДЛЯ МОДАЛЬНОГО ОКНА
   =========================================
 */
-.rodal-dialog {
-  background-color: var(--color-bg-card) !important;
-  border-radius: 16px !important;
-  padding: 24px !important;
-  border: 1px solid var(--color-border) !important;
+
+/* Оверлей (затемнённый фон) */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  animation: fadeIn 0.2s ease-out;
 }
 
-.rodal-close {
-  top: 16px !important;
-  right: 16px !important;
+/* Само модальное окно */
+.modal-dialog {
+  background-color: var(--color-bg-card);
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  position: relative;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideIn 0.2s ease-out;
 }
 
-.rodal-close::before,
-.rodal-close::after {
-  background-color: var(--color-text-muted) !important;
+/* Кнопка закрытия */
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.rodal-close:hover::before,
-.rodal-close:hover::after {
-  background-color: var(--color-text) !important;
+.modal-close:hover {
+  color: var(--color-text);
+}
+
+/* Анимации */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }

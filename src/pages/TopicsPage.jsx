@@ -14,8 +14,7 @@
 
 import { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import Rodal from 'rodal'
-import 'rodal/lib/rodal.css'
+import Modal from '../components/Modal'
 
 // Импортируем функции для работы с API
 import { getData, saveData, getCachedData } from '../services/api'
@@ -258,7 +257,7 @@ function TopicsPage() {
         </div>
 
         {/* ===== МОДАЛКА ===== */}
-        <Rodal
+        <Modal
           visible={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           width={Math.min(450, window.innerWidth - 32)}
@@ -289,7 +288,7 @@ function TopicsPage() {
           >
             Добавить раздел
           </button>
-        </Rodal>
+        </Modal>
       </div>
     </div>
   )
