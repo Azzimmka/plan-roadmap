@@ -137,10 +137,19 @@ function RichTextInput({
       newCursorPos = start - wrapper.length + text.length
     } else {
       // Добавляем форматирование
+      // Для кода: убираем лишние пробелы по краям, но сохраняем внутренние переносы
+      let formattedText = text
+      if (format === 'code') {
+        // Убираем пробелы/переносы только по краям
+        formattedText = text.replace(/^[\s\n]+|[\s\n]+$/g, '')
+        // Если после обрезки текст пустой, используем оригинал
+        if (!formattedText) formattedText = text.trim() || text
+      }
+
       newValue = value.substring(0, start) +
-                 wrapper + text + wrapper +
+                 wrapper + formattedText + wrapper +
                  value.substring(end)
-      newCursorPos = end + wrapper.length * 2
+      newCursorPos = start + wrapper.length + formattedText.length + wrapper.length
     }
 
     onChange(newValue)

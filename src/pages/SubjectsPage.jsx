@@ -21,13 +21,19 @@ import ConfirmDeleteModal from '../components/ConfirmDeleteModal'
 import AlertModal from '../components/AlertModal'
 import {
   DndContext,
-  closestCenter
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  DragOverlay
 } from '@dnd-kit/core'
 import {
   arrayMove,
   SortableContext,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 
 // Импортируем функции для работы с API
 import { getSubjects, saveSubjects, getCachedData } from '../services/api'
@@ -35,17 +41,40 @@ import { SortableSubjectItem } from '../components/SortableSubjectItem'
 
 // Импортируем функцию склонения для правильной грамматики
 import { pluralizeSubjects } from '../utils/pluralize'
+import ColorPicker, { getColorById } from '../components/ColorPicker'
+import EmojiPicker, { getEmojiById } from '../components/EmojiPicker'
 
 function SubjectsPage() {
   // Состояния
   const [subjects, setSubjects] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newSubjectName, setNewSubjectName] = useState('')
+  const [selectedColor, setSelectedColor] = useState('orange') // цвет по умолчанию
+  const [selectedEmoji, setSelectedEmoji] = useState(null) // эмодзи (необязательно)
   const [isLoading, setIsLoading] = useState(true)
+  const [editingSubject, setEditingSubject] = useState(null) // для редактирования
 
   // Состояния для модалок удаления и уведомлений
   const [deleteModal, setDeleteModal] = useState({ visible: false, subject: null })
   const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', type: 'error' })
+
+  // Состояние для drag-and-drop
+  const [activeId, setActiveId] = useState(null)
+
+  // Настройка сенсоров для drag-and-drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // минимальное расстояние для активации
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250, // задержка для тач-устройств (предотвращает случайный скролл)
+        tolerance: 5,
+      },
+    })
+  )
 
   /*
     =========================================
@@ -93,6 +122,8 @@ function SubjectsPage() {
     const newSubject = {
       id: crypto.randomUUID(),
       name: newSubjectName.trim(),
+      color: selectedColor,
+      emoji: selectedEmoji,
       sections: []
     }
 
@@ -101,6 +132,8 @@ function SubjectsPage() {
     // Сначала обновляем UI (оптимистичное обновление)
     setSubjects(updatedSubjects)
     setNewSubjectName('')
+    setSelectedColor('orange')
+    setSelectedEmoji(null)
     setIsModalOpen(false)
 
     // Потом сохраняем на сервер
@@ -123,6 +156,48 @@ function SubjectsPage() {
   const handleDeleteSubject = (subjectId) => {
     const subject = subjects.find(s => s.id === subjectId)
     setDeleteModal({ visible: true, subject })
+  }
+
+  // EDIT — открытие модалки редактирования
+  const handleEditSubject = (subject) => {
+    setEditingSubject(subject)
+    setNewSubjectName(subject.name)
+    setSelectedColor(subject.color || 'orange')
+    setSelectedEmoji(subject.emoji || null)
+    setIsModalOpen(true)
+  }
+
+  // Сохранение редактирования
+  const confirmEditSubject = async () => {
+    if (!newSubjectName.trim() || !editingSubject) return
+
+    const updatedSubjects = subjects.map(s => {
+      if (s.id === editingSubject.id) {
+        return { ...s, name: newSubjectName.trim(), color: selectedColor, emoji: selectedEmoji }
+      }
+      return s
+    })
+
+    // Оптимистичное обновление
+    setSubjects(updatedSubjects)
+    setNewSubjectName('')
+    setSelectedColor('orange')
+    setSelectedEmoji(null)
+    setEditingSubject(null)
+    setIsModalOpen(false)
+
+    try {
+      await saveSubjects(updatedSubjects)
+    } catch (error) {
+      console.error('Ошибка сохранения:', error)
+      setSubjects(subjects)
+      setAlertModal({
+        visible: true,
+        title: 'Ошибка',
+        message: 'Не удалось сохранить. Попробуйте ещё раз.',
+        type: 'error'
+      })
+    }
   }
 
   // Подтверждение удаления (после ввода пароля)
@@ -148,10 +223,13 @@ function SubjectsPage() {
     }
   }
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      handleAddSubject()
-    }
+  // Закрытие модалки с очисткой состояния
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setNewSubjectName('')
+    setSelectedColor('orange')
+    setSelectedEmoji(null)
+    setEditingSubject(null)
   }
 
   /*
@@ -169,9 +247,15 @@ function SubjectsPage() {
     )
   }
 
+  function handleDragStart(event) {
+    setActiveId(event.active.id)
+  }
+
   async function handleDragEnd(event) {
     const { active, over } = event
-    if (active.id !== over.id) {
+    setActiveId(null)
+
+    if (over && active.id !== over.id) {
       setSubjects((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id)
         const newIndex = items.findIndex((item) => item.id === over.id)
@@ -181,6 +265,9 @@ function SubjectsPage() {
       })
     }
   }
+
+  // Получаем активный элемент для DragOverlay
+  const activeSubject = activeId ? subjects.find(s => s.id === activeId) : null
 
   return (
     <div className="min-h-screen p-4 sm:p-6 md:p-8 pt-8 sm:pt-12">
@@ -209,8 +296,11 @@ function SubjectsPage() {
 
         {/* ===== СПИСОК ПРЕДМЕТОВ ===== */}
         <DndContext
+          sensors={sensors}
           collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
+          modifiers={[restrictToVerticalAxis]}
         >
           <div className="space-y-3 sm:space-y-4">
             <SortableContext
@@ -222,10 +312,31 @@ function SubjectsPage() {
                   key={subject.id}
                   subject={subject}
                   handleDeleteSubject={handleDeleteSubject}
+                  handleEditSubject={handleEditSubject}
+                  isDragging={subject.id === activeId}
                 />
               ))}
             </SortableContext>
           </div>
+
+          {/* DragOverlay — показывает копию элемента при перетаскивании */}
+          <DragOverlay>
+            {activeSubject ? (
+              <div className="bg-[var(--color-bg-card)] rounded-xl sm:rounded-2xl
+                            border border-[var(--color-accent)] shadow-lg shadow-[var(--color-accent)]/20
+                            overflow-hidden opacity-95">
+                <div className="h-1 w-full" style={{ backgroundColor: getColorById(activeSubject.color)?.value }} />
+                <div className="p-4 sm:p-5">
+                  <div className="flex items-start gap-2">
+                    {getEmojiById(activeSubject.emoji) && (
+                      <span className="text-xl shrink-0">{getEmojiById(activeSubject.emoji).emoji}</span>
+                    )}
+                    <span className="text-lg sm:text-xl font-medium" style={{ whiteSpace: 'pre-line' }}>{activeSubject.name}</span>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </DragOverlay>
         </DndContext>
 
         {subjects.length === 0 && (
@@ -238,34 +349,60 @@ function SubjectsPage() {
         {/* ===== МОДАЛЬНОЕ ОКНО ===== */}
         <Modal
           visible={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={closeModal}
           width={Math.min(450, window.innerWidth - 32)}
-          height={220}
+          height="auto"
           customStyles={{ padding: '20px' }}
         >
-          <h2 className="text-lg sm:text-xl font-medium mb-4 sm:mb-5">Новый предмет</h2>
+          <h2 className="text-lg sm:text-xl font-medium mb-4 sm:mb-5">
+            {editingSubject ? 'Редактировать предмет' : 'Новый предмет'}
+          </h2>
 
-          <input
-            type="text"
+          <textarea
             value={newSubjectName}
             onChange={(e) => setNewSubjectName(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Название предмета..."
+            onKeyDown={(e) => {
+              // Enter — сохранить, Shift+Enter — новая строка
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                if (editingSubject) {
+                  confirmEditSubject()
+                } else {
+                  handleAddSubject()
+                }
+              }
+            }}
+            placeholder="Название предмета...&#10;&#10;Shift+Enter для новой строки"
             className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl
                        bg-[var(--color-bg)] border border-[var(--color-border)]
                        text-white text-base sm:text-lg placeholder-[var(--color-text-muted)]
-                       focus:border-[var(--color-accent)] focus:outline-none"
+                       focus:border-[var(--color-accent)] focus:outline-none
+                       resize-none min-h-[100px]"
             autoFocus
           />
 
+          <div className="mt-4">
+            <ColorPicker
+              selectedColor={selectedColor}
+              onChange={setSelectedColor}
+            />
+          </div>
+
+          <div className="mt-4">
+            <EmojiPicker
+              selectedEmoji={selectedEmoji}
+              onChange={setSelectedEmoji}
+            />
+          </div>
+
           <button
-            onClick={handleAddSubject}
+            onClick={editingSubject ? confirmEditSubject : handleAddSubject}
             className="mt-4 sm:mt-5 w-full p-3 sm:p-4 rounded-lg sm:rounded-xl
                        bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]
                        active:scale-95 transition-all duration-200
                        font-medium text-base sm:text-lg cursor-pointer"
           >
-            Добавить
+            {editingSubject ? 'Сохранить' : 'Добавить'}
           </button>
         </Modal>
 

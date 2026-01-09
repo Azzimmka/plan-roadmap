@@ -10,69 +10,98 @@
 */
 
 import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { Link } from 'react-router-dom';
 
 // Импортируем функцию склонения для правильной грамматики
 import { pluralizeSections } from '../utils/pluralize';
+import { getColorById } from './ColorPicker';
+import { getEmojiById } from './EmojiPicker';
 
-export function SortableSubjectItem({ subject, handleDeleteSubject }) {
+export function SortableSubjectItem({ subject, handleDeleteSubject, handleEditSubject }) {
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
     transition,
+    isDragging,
   } = useSortable({ id: subject.id });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    // Используем только translate, без scale (чтобы не растягивалось)
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     transition,
   };
+
+  // Получаем цвет и эмодзи предмета
+  const subjectColor = getColorById(subject.color);
+  const subjectEmoji = getEmojiById(subject.emoji);
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-[var(--color-bg-card)] rounded-xl sm:rounded-2xl p-4 sm:p-5
+      className={`bg-[var(--color-bg-card)] rounded-xl sm:rounded-2xl
                  border border-[var(--color-border)]
-                 hover:border-[var(--color-text-muted)]
-                 transition-all duration-200"
+                 ${isDragging ? 'opacity-30 border-dashed border-[var(--color-accent)]' : 'hover:border-[var(--color-text-muted)]'}
+                 transition-colors duration-200 overflow-hidden`}
     >
-      <div className="flex items-start justify-between gap-3">
-        {/* Иконка для перетаскивания — только здесь listeners! */}
-        <button
-          {...attributes}
-          {...listeners}
-          className="text-[var(--color-text-muted)] hover:text-[var(--color-accent)]
+      {/* Цветная полоска сверху */}
+      <div
+        className="h-1 w-full"
+        style={{ backgroundColor: subjectColor.value }}
+      />
+
+      <div className="p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-3">
+          {/* Иконка для перетаскивания — только здесь listeners! */}
+          <button
+            {...attributes}
+            {...listeners}
+            className="text-[var(--color-text-muted)] hover:text-[var(--color-accent)]
                      cursor-grab active:cursor-grabbing px-1 pt-1 touch-none shrink-0"
-          aria-label="Перетащить"
-        >
-          ⋮⋮
-        </button>
+            aria-label="Перетащить"
+          >
+            ⋮⋮
+          </button>
 
-        <Link
-          to={`/subject/${subject.id}`}
-          className="text-lg sm:text-xl font-medium hover:text-[var(--color-accent)]
-                     transition-colors flex-1 min-w-0 break-all"
-        >
-          {subject.name}
-        </Link>
+          <Link
+            to={`/subject/${subject.id}`}
+            className="text-lg sm:text-xl font-medium hover:text-[var(--color-accent)]
+                     transition-colors flex-1 min-w-0 break-words flex items-start gap-2"
+          >
+            {subjectEmoji && <span className="text-xl shrink-0">{subjectEmoji.emoji}</span>}
+            <span style={{ whiteSpace: 'pre-line' }}>{subject.name}</span>
+          </Link>
 
-        <button
-          onClick={() => handleDeleteSubject(subject.id)}
-          className="text-[var(--color-text-muted)] hover:text-[var(--color-danger)]
-                     active:text-[var(--color-danger)]
-                     transition-colors px-2 sm:px-3 pt-1 text-sm cursor-pointer
-                     shrink-0"
-        >
-          Удалить
-        </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={() => handleEditSubject(subject)}
+              className="text-[var(--color-text-muted)] hover:text-[var(--color-accent)]
+                       active:text-[var(--color-accent)]
+                       transition-colors px-2 sm:px-3 pt-1 text-sm cursor-pointer"
+              aria-label="Редактировать"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => handleDeleteSubject(subject.id)}
+              className="text-[var(--color-text-muted)] hover:text-[var(--color-danger)]
+                       active:text-[var(--color-danger)]
+                       transition-colors px-2 sm:px-3 pt-1 text-sm cursor-pointer"
+            >
+              Удалить
+            </button>
+          </div>
+        </div>
+
+        <p className="text-sm sm:text-base text-[var(--color-text-muted)] mt-2">
+          {pluralizeSections(subject.sections?.length || 0)}
+        </p>
       </div>
-
-      <p className="text-sm sm:text-base text-[var(--color-text-muted)] mt-2">
-        {pluralizeSections(subject.sections?.length || 0)}
-      </p>
     </div>
   );
 }

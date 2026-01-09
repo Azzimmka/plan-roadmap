@@ -27,6 +27,14 @@ import {
   SortableContext,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
+import {
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  DragOverlay
+} from '@dnd-kit/core'
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 
 // Импортируем функции для работы с API
 import { getData, saveData, getCachedData } from '../services/api'
@@ -34,6 +42,7 @@ import { SortableTopicItem } from '../components/SortableTopicItem'
 
 // Импортируем функцию склонения для правильной грамматики
 import { pluralizeTopics } from '../utils/pluralize'
+import { FormattedText } from '../utils/formatText'
 
 function TopicsPage() {
   const { subjectId, sectionId } = useParams()
@@ -47,10 +56,36 @@ function TopicsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newTopicName, setNewTopicName] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [editingTopic, setEditingTopic] = useState(null) // для редактирования
 
   // Состояния для модалок удаления и уведомлений
   const [deleteModal, setDeleteModal] = useState({ visible: false, topic: null })
   const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', type: 'error' })
+
+  // Состояния для заметок, ссылок, приоритетов и тегов
+  const [noteModal, setNoteModal] = useState({ visible: false, topic: null })
+  const [noteText, setNoteText] = useState('')
+  const [linkText, setLinkText] = useState('')
+  const [priority, setPriority] = useState(null) // null, 'low', 'medium', 'high'
+  const [tagsText, setTagsText] = useState('') // теги через пробел
+
+  // Состояние для drag-and-drop
+  const [activeId, setActiveId] = useState(null)
+
+  // Настройка сенсоров
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    })
+  )
 
   // Загрузка данных с кэшированием
   useEffect(() => {
@@ -160,6 +195,114 @@ function TopicsPage() {
     setDeleteModal({ visible: true, topic })
   }
 
+  // EDIT — открытие модалки редактирования
+  const handleEditTopic = (topic) => {
+    setEditingTopic(topic)
+    setNewTopicName(topic.name)
+    setIsModalOpen(true)
+  }
+
+  // Сохранение редактирования
+  const confirmEditTopic = async () => {
+    if (!newTopicName.trim() || !editingTopic) return
+
+    const updatedTopics = topics.map(t => {
+      if (t.id === editingTopic.id) {
+        return { ...t, name: newTopicName.trim() }
+      }
+      return t
+    })
+
+    // Оптимистичное обновление
+    setTopics(updatedTopics)
+    setNewTopicName('')
+    setEditingTopic(null)
+    setIsModalOpen(false)
+
+    try {
+      await saveToServer(updatedTopics)
+    } catch (error) {
+      console.error('Ошибка сохранения:', error)
+      setTopics(topics)
+      setAlertModal({
+        visible: true,
+        title: 'Ошибка',
+        message: 'Не удалось сохранить. Попробуйте ещё раз.',
+        type: 'error'
+      })
+    }
+  }
+
+  // Закрытие модалки с очисткой состояния
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setNewTopicName('')
+    setEditingTopic(null)
+  }
+
+  // NOTE — открытие модалки заметок
+  const handleNoteTopic = (topic) => {
+    setNoteModal({ visible: true, topic })
+    setNoteText(topic.note || '')
+    setLinkText(topic.link || '')
+    setPriority(topic.priority || null)
+    setTagsText(topic.tags?.join(' ') || '')
+  }
+
+  // Сохранение заметки, ссылки, приоритета и тегов
+  const saveNote = async () => {
+    if (!noteModal.topic) return
+
+    // Парсим теги: разделяем по пробелам, убираем пустые, добавляем # если нет
+    const parsedTags = tagsText
+      .split(/\s+/)
+      .filter(tag => tag.trim())
+      .map(tag => tag.startsWith('#') ? tag : `#${tag}`)
+
+    const updatedTopics = topics.map(t => {
+      if (t.id === noteModal.topic.id) {
+        return {
+          ...t,
+          note: noteText.trim() || null,
+          link: linkText.trim() || null,
+          priority: priority,
+          tags: parsedTags.length > 0 ? parsedTags : null
+        }
+      }
+      return t
+    })
+
+    // Оптимистичное обновление
+    setTopics(updatedTopics)
+    setNoteModal({ visible: false, topic: null })
+    setNoteText('')
+    setLinkText('')
+    setPriority(null)
+    setTagsText('')
+
+    try {
+      await saveToServer(updatedTopics)
+    } catch (error) {
+      console.error('Ошибка сохранения:', error)
+      setTopics(topics)
+      setAlertModal({
+        visible: true,
+        title: 'Ошибка',
+        message: 'Не удалось сохранить заметку.',
+        type: 'error'
+      })
+    }
+  }
+
+  // Закрытие модалки заметки
+  const closeNoteModal = () => {
+    setNoteModal({ visible: false, topic: null })
+    setNoteText('')
+    setLinkText('')
+    setPriority(null)
+    setTagsText('')
+  }
+
   // Подтверждение удаления (после ввода пароля)
   const confirmDeleteTopic = async (topicId) => {
     if (!topicId) return
@@ -199,9 +342,15 @@ function TopicsPage() {
     )
   }
 
+  function handleDragStart(event) {
+    setActiveId(event.active.id)
+  }
+
   async function handleDragEnd(event) {
     const { active, over } = event
-    if (active.id !== over.id) {
+    setActiveId(null)
+
+    if (over && active.id !== over.id) {
       setTopics((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id)
         const newIndex = items.findIndex((item) => item.id === over.id)
@@ -211,6 +360,8 @@ function TopicsPage() {
       })
     }
   }
+
+  const activeTopic = activeId ? topics.find(t => t.id === activeId) : null
 
   return (
     <div className="min-h-screen p-4 sm:p-6 md:p-8 pt-8 sm:pt-12">
@@ -263,8 +414,11 @@ function TopicsPage() {
 
         {/* ===== СПИСОК ТЕМ ===== */}
         <DndContext
+          sensors={sensors}
           collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
+          modifiers={[restrictToVerticalAxis]}
         >
           <div className="space-y-3 sm:space-y-4">
             <SortableContext
@@ -277,10 +431,31 @@ function TopicsPage() {
                   topic={topic}
                   index={index}
                   handleDeleteTopic={handleDeleteTopic}
+                  handleEditTopic={handleEditTopic}
+                  handleNoteTopic={handleNoteTopic}
                 />
               ))}
             </SortableContext>
           </div>
+
+          <DragOverlay>
+            {activeTopic ? (
+              <div className="bg-[var(--color-bg-card)] rounded-xl sm:rounded-2xl p-3 sm:p-5
+                              border border-[var(--color-accent)] shadow-lg shadow-[var(--color-accent)]/20
+                              opacity-95 overflow-hidden">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <span className="text-[var(--color-accent)] text-sm sm:text-lg font-medium shrink-0">
+                    {topics.findIndex(t => t.id === activeTopic.id) + 1}.
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <FormattedText className="text-base sm:text-lg break-words">
+                      {activeTopic.name}
+                    </FormattedText>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </DragOverlay>
         </DndContext>
 
         {topics.length === 0 && (
@@ -293,30 +468,148 @@ function TopicsPage() {
         {/* ===== МОДАЛКА ===== */}
         <Modal
           visible={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={closeModal}
           width={Math.min(450, window.innerWidth - 32)}
           height="auto"
           customStyles={{ padding: '20px' }}
         >
-          <h2 className="text-lg sm:text-xl font-medium mb-4 sm:mb-5">Новый раздел</h2>
+          <h2 className="text-lg sm:text-xl font-medium mb-4 sm:mb-5">
+            {editingTopic ? 'Редактировать раздел' : 'Новый раздел'}
+          </h2>
 
           <RichTextInput
             value={newTopicName}
             onChange={setNewTopicName}
-            onSubmit={handleAddTopic}
+            onSubmit={editingTopic ? confirmEditTopic : handleAddTopic}
             placeholder="Введите текст раздела...&#10;&#10;Выделите текст для форматирования"
             autoFocus
           />
 
           <button
-            onClick={handleAddTopic}
+            onClick={editingTopic ? confirmEditTopic : handleAddTopic}
             className="mt-4 sm:mt-5 w-full p-3 sm:p-4 rounded-lg sm:rounded-xl
                        bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]
                        active:scale-95 transition-all duration-200
                        font-medium text-base sm:text-lg cursor-pointer"
           >
-            Добавить раздел
+            {editingTopic ? 'Сохранить' : 'Добавить раздел'}
           </button>
+        </Modal>
+
+        {/* Модалка заметки и ссылки */}
+        <Modal
+          visible={noteModal.visible}
+          onClose={closeNoteModal}
+          width={Math.min(450, window.innerWidth - 32)}
+          height="auto"
+          customStyles={{ padding: '20px' }}
+        >
+          <h2 className="text-lg sm:text-xl font-medium mb-4">
+            Заметка и ссылка
+          </h2>
+          <p className="text-sm text-[var(--color-text-muted)] mb-3 break-words">
+            {noteModal.topic?.name}
+          </p>
+
+          <textarea
+            value={noteText}
+            onChange={(e) => setNoteText(e.target.value)}
+            placeholder="Напишите заметку..."
+            className="w-full p-3 sm:p-4 rounded-lg sm:rounded-xl
+                       bg-[var(--color-bg)] border border-[var(--color-border)]
+                       text-white text-base placeholder-[var(--color-text-muted)]
+                       focus:border-[var(--color-accent)] focus:outline-none
+                       resize-none min-h-[100px]"
+            autoFocus
+          />
+
+          {/* Поле для ссылки */}
+          <div className="mt-3">
+            <label className="text-sm text-[var(--color-text-muted)] mb-1.5 block">
+              Ссылка на ресурс
+            </label>
+            <input
+              type="url"
+              value={linkText}
+              onChange={(e) => setLinkText(e.target.value)}
+              placeholder="https://..."
+              className="w-full p-3 rounded-lg sm:rounded-xl
+                         bg-[var(--color-bg)] border border-[var(--color-border)]
+                         text-white text-base placeholder-[var(--color-text-muted)]
+                         focus:border-[var(--color-accent)] focus:outline-none"
+            />
+          </div>
+
+          {/* Выбор приоритета */}
+          <div className="mt-3">
+            <label className="text-sm text-[var(--color-text-muted)] mb-1.5 block">
+              Приоритет
+            </label>
+            <div className="flex gap-2">
+              {[
+                { id: null, label: 'Нет', color: 'var(--color-border)' },
+                { id: 'low', label: 'Низкий', color: '#57d97a' },
+                { id: 'medium', label: 'Средний', color: '#d9c857' },
+                { id: 'high', label: 'Высокий', color: '#d95b5b' },
+              ].map(p => (
+                <button
+                  key={p.id || 'none'}
+                  type="button"
+                  onClick={() => setPriority(p.id)}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm transition-all duration-200 cursor-pointer
+                             ${priority === p.id
+                      ? 'ring-2 ring-offset-2 ring-offset-[var(--color-bg-card)]'
+                      : 'hover:opacity-80'}`}
+                  style={{
+                    backgroundColor: p.id ? p.color + '20' : 'var(--color-bg)',
+                    borderColor: p.color,
+                    border: `1px solid ${p.color}`,
+                    ringColor: p.color
+                  }}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Поле для тегов */}
+          <div className="mt-3">
+            <label className="text-sm text-[var(--color-text-muted)] mb-1.5 block">
+              Теги (через пробел)
+            </label>
+            <input
+              type="text"
+              value={tagsText}
+              onChange={(e) => setTagsText(e.target.value)}
+              placeholder="#важно #повторить #сложно"
+              className="w-full p-3 rounded-lg sm:rounded-xl
+                         bg-[var(--color-bg)] border border-[var(--color-border)]
+                         text-white text-base placeholder-[var(--color-text-muted)]
+                         focus:border-[var(--color-accent)] focus:outline-none"
+            />
+          </div>
+
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={closeNoteModal}
+              className="flex-1 p-3 rounded-lg sm:rounded-xl
+                         border border-[var(--color-border)]
+                         hover:border-[var(--color-text-muted)]
+                         transition-all duration-200 cursor-pointer"
+            >
+              Отмена
+            </button>
+            <button
+              onClick={saveNote}
+              className="flex-1 p-3 rounded-lg sm:rounded-xl
+                         bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]
+                         active:scale-95 transition-all duration-200
+                         font-medium cursor-pointer"
+            >
+              Сохранить
+            </button>
+          </div>
         </Modal>
 
         {/* Модалка подтверждения удаления */}
