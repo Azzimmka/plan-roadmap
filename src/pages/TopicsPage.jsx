@@ -56,6 +56,8 @@ function TopicsPage() {
   const [allSubjects, setAllSubjects] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newTopicName, setNewTopicName] = useState('')
+  const [newTopicImages, setNewTopicImages] = useState([])
+  const [newTopicLinks, setNewTopicLinks] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [editingTopic, setEditingTopic] = useState(null) // для редактирования
 
@@ -75,6 +77,9 @@ function TopicsPage() {
 
   // Состояние для поиска
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Состояние для "Следующая тема"
+  const [nextTopicModal, setNextTopicModal] = useState({ visible: false, topic: null })
 
   // Настройка сенсоров
   const sensors = useSensors(
@@ -169,7 +174,9 @@ function TopicsPage() {
 
     const newTopic = {
       id: crypto.randomUUID(),
-      name: newTopicName.trim()
+      name: newTopicName.trim(),
+      images: newTopicImages.length > 0 ? newTopicImages : undefined,
+      links: newTopicLinks.length > 0 ? newTopicLinks : undefined
     }
 
     const updatedTopics = [...topics, newTopic]
@@ -177,6 +184,8 @@ function TopicsPage() {
     // Оптимистичное обновление
     setTopics(updatedTopics)
     setNewTopicName('')
+    setNewTopicImages([])
+    setNewTopicLinks([])
     setIsModalOpen(false)
 
     try {
@@ -203,6 +212,8 @@ function TopicsPage() {
   const handleEditTopic = (topic) => {
     setEditingTopic(topic)
     setNewTopicName(topic.name)
+    setNewTopicImages(topic.images || [])
+    setNewTopicLinks(topic.links || [])
     setIsModalOpen(true)
   }
 
@@ -212,7 +223,12 @@ function TopicsPage() {
 
     const updatedTopics = topics.map(t => {
       if (t.id === editingTopic.id) {
-        return { ...t, name: newTopicName.trim() }
+        return {
+          ...t,
+          name: newTopicName.trim(),
+          images: newTopicImages.length > 0 ? newTopicImages : undefined,
+          links: newTopicLinks.length > 0 ? newTopicLinks : undefined
+        }
       }
       return t
     })
@@ -220,6 +236,8 @@ function TopicsPage() {
     // Оптимистичное обновление
     setTopics(updatedTopics)
     setNewTopicName('')
+    setNewTopicImages([])
+    setNewTopicLinks([])
     setEditingTopic(null)
     setIsModalOpen(false)
 
@@ -241,6 +259,8 @@ function TopicsPage() {
   const closeModal = () => {
     setIsModalOpen(false)
     setNewTopicName('')
+    setNewTopicImages([])
+    setNewTopicLinks([])
     setEditingTopic(null)
   }
 
@@ -333,6 +353,49 @@ function TopicsPage() {
   const handleSearch = useCallback((query) => {
     setSearchQuery(query)
   }, [])
+
+  // Все темы (sections) предмета для выбора следующей
+  const allSections = subject?.sections || []
+
+  // Открытие модалки выбора следующей темы для конкретного раздела
+  const handleNextTopic = (topic) => {
+    // Если уже выбрана следующая тема — переходим к ней
+    if (topic.nextSection) {
+      navigate(`/subject/${subjectId}/section/${topic.nextSection}`)
+    } else {
+      // Иначе открываем модалку для выбора
+      setNextTopicModal({ visible: true, topic })
+    }
+  }
+
+  // Сохранение следующей темы для конкретного раздела
+  const saveNextSection = async (selectedSectionId) => {
+    if (!nextTopicModal.topic) return
+
+    const updatedTopics = topics.map(t => {
+      if (t.id === nextTopicModal.topic.id) {
+        return { ...t, nextSection: selectedSectionId }
+      }
+      return t
+    })
+
+    // Оптимистичное обновление
+    setTopics(updatedTopics)
+    setNextTopicModal({ visible: false, topic: null })
+
+    try {
+      await saveToServer(updatedTopics)
+    } catch (error) {
+      console.error('Ошибка сохранения:', error)
+      setTopics(topics)
+      setAlertModal({
+        visible: true,
+        title: 'Ошибка',
+        message: 'Не удалось сохранить. Попробуйте ещё раз.',
+        type: 'error'
+      })
+    }
+  }
 
   // Фильтрация тем по поисковому запросу (ищем в названии и тегах)
   const filteredTopics = filterBySearch(
@@ -460,6 +523,8 @@ function TopicsPage() {
                   handleDeleteTopic={handleDeleteTopic}
                   handleEditTopic={handleEditTopic}
                   handleNoteTopic={handleNoteTopic}
+                  handleNextTopic={handleNextTopic}
+                  allSections={allSections}
                 />
               ))}
             </SortableContext>
@@ -497,6 +562,48 @@ function TopicsPage() {
           </p>
         )}
 
+        {/* ===== МОДАЛКА ВЫБОРА СЛЕДУЮЩЕЙ ТЕМЫ ===== */}
+        <Modal
+          visible={nextTopicModal.visible}
+          onClose={() => setNextTopicModal({ visible: false, topic: null })}
+          width={Math.min(450, window.innerWidth - 32)}
+          height="auto"
+          customStyles={{ padding: '20px', maxHeight: '70vh', overflowY: 'auto' }}
+        >
+          <h2 className="text-lg sm:text-xl font-medium mb-2">
+            Выберите следующую тему
+          </h2>
+          <p className="text-sm text-[var(--color-text-muted)] mb-4">
+            для: {nextTopicModal.topic?.name}
+          </p>
+
+          <div className="space-y-1 max-h-[50vh] overflow-y-auto pr-1">
+            {allSections.map(sec => (
+              <button
+                key={sec.id}
+                onClick={() => saveNextSection(sec.id)}
+                className={`w-full p-3 rounded-lg text-left
+                           transition-all duration-200 cursor-pointer
+                           ${nextTopicModal.topic?.nextSection === sec.id
+                    ? 'bg-[var(--color-accent)] text-white'
+                    : 'bg-[var(--color-bg)] hover:bg-[var(--color-border)]'
+                  }`}
+              >
+                <span style={{ whiteSpace: 'pre-line' }}>{sec.name}</span>
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setNextTopicModal({ visible: false, topic: null })}
+            className="mt-4 w-full p-3 rounded-lg sm:rounded-xl
+                       border border-[var(--color-border)]
+                       hover:border-[var(--color-text-muted)]
+                       transition-all duration-200 cursor-pointer"
+          >
+            Отмена
+          </button>
+        </Modal>
 
         {/* ===== МОДАЛКА ===== */}
         <Modal
@@ -514,8 +621,14 @@ function TopicsPage() {
             value={newTopicName}
             onChange={setNewTopicName}
             onSubmit={editingTopic ? confirmEditTopic : handleAddTopic}
-            placeholder="Введите текст раздела...&#10;&#10;Выделите текст для форматирования"
+            placeholder="Введите текст раздела..."
             autoFocus
+            images={newTopicImages}
+            onImagesChange={setNewTopicImages}
+            links={newTopicLinks}
+            onLinksChange={setNewTopicLinks}
+            sections={allSections}
+            subjectId={subjectId}
           />
 
           <button

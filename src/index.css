@@ -433,3 +433,727 @@ body {
 .alert-modal-btn:active {
   transform: scale(0.97);
 }
+
+/*
+  =========================================
+  RICH TEXT TOOLBAR — панель инструментов
+  =========================================
+*/
+
+.rich-text-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toolbar-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.toolbar-btn:active {
+  transform: scale(0.97);
+}
+
+/* Превью картинок при редактировании */
+.rich-text-images-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.rich-text-image-thumb {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.rich-text-image-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.rich-text-image-index {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: var(--color-accent);
+  font-size: 9px;
+  text-align: center;
+  padding: 2px;
+  font-family: monospace;
+}
+
+.rich-text-image-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  border-radius: 50%;
+  color: var(--color-danger);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.rich-text-image-thumb:hover .rich-text-image-remove {
+  opacity: 1;
+}
+
+.rich-text-image-remove:hover {
+  background: var(--color-danger);
+  color: white;
+}
+
+/* Превью ссылок при редактировании */
+.rich-text-links-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.rich-text-link-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background-color: var(--color-bg-card);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.rich-text-link-marker {
+  color: var(--color-accent);
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.rich-text-link-text {
+  color: var(--color-text);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+.rich-text-link-url {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.rich-text-link-remove {
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.rich-text-link-remove:hover {
+  background: var(--color-danger);
+  color: white;
+}
+
+/*
+  =========================================
+  IMAGE MODAL — модалка добавления картинки
+  =========================================
+*/
+
+.image-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 16px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.image-modal {
+  background-color: var(--color-bg-card);
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  width: 100%;
+  max-width: 400px;
+  animation: slideIn 0.2s ease-out;
+}
+
+.image-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--color-text);
+}
+
+.image-modal-section {
+  margin-bottom: 16px;
+}
+
+.image-modal-label {
+  display: block;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+.image-modal-url-row {
+  display: flex;
+  gap: 8px;
+}
+
+.image-modal-input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.image-modal-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.image-modal-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.image-modal-btn {
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.image-modal-btn.primary {
+  background-color: var(--color-accent);
+  color: white;
+}
+
+.image-modal-btn.primary:hover:not(:disabled) {
+  background-color: var(--color-accent-hover);
+}
+
+.image-modal-btn.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.image-modal-btn.cancel {
+  width: 100%;
+  background-color: var(--color-bg);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+.image-modal-btn.cancel:hover {
+  border-color: var(--color-text-muted);
+  color: var(--color-text);
+}
+
+.image-modal-btn:active {
+  transform: scale(0.97);
+}
+
+.image-modal-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 20px 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.image-modal-divider::before,
+.image-modal-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--color-border);
+}
+
+.image-modal-upload-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  background-color: var(--color-bg);
+  border: 2px dashed var(--color-border);
+  border-radius: 12px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.image-modal-upload-btn:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.image-modal-upload-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.image-modal-hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 8px;
+  opacity: 0.7;
+}
+
+.image-modal-error {
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-danger);
+  margin-top: 8px;
+  padding: 8px;
+  background-color: rgba(229, 91, 91, 0.1);
+  border-radius: 6px;
+}
+
+/*
+  =========================================
+  LINK MODAL — модалка добавления ссылки
+  =========================================
+*/
+
+.link-modal {
+  min-width: 320px;
+}
+
+.link-selected-text {
+  background-color: var(--color-bg);
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.link-selected-text span {
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+.link-type-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.link-type-tab {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.link-type-tab:hover {
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.link-type-tab.active {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: white;
+}
+
+.link-sections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.link-section-item {
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  border-radius: 8px;
+  color: var(--color-text);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.link-section-item:hover {
+  border-color: var(--color-accent);
+  background-color: rgba(217, 119, 87, 0.1);
+}
+
+.link-section-item.selected {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: white;
+}
+
+.link-modal-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/*
+  =========================================
+  FORMATTED LINKS — ссылки в тексте
+  =========================================
+*/
+
+.formatted-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--color-accent);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.formatted-link:hover {
+  border-bottom-style: solid;
+  opacity: 0.8;
+}
+
+.internal-link {
+  color: #57a0d9;
+  border-bottom-color: #57a0d9;
+}
+
+.internal-link:hover {
+  color: #7ab8e8;
+  border-bottom-color: #7ab8e8;
+}
+
+.external-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.external-link-icon {
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+/* Кнопка ссылки в тулбаре */
+.format-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/*
+  =========================================
+  TOOLTIPS — всплывающие подсказки
+  =========================================
+*/
+
+.tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.tooltip-wrapper::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  padding: 6px 12px;
+  background-color: #1a1a1a;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.15s ease;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.tooltip-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  border: 5px solid transparent;
+  border-bottom-color: #1a1a1a;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.15s ease;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.tooltip-wrapper:hover::after,
+.tooltip-wrapper:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tooltip-wrapper:hover::after {
+  transform: translateX(-50%) translateY(8px);
+}
+
+.tooltip-wrapper:hover::before {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* На мобильных скрываем тултипы */
+@media (max-width: 640px) {
+  .tooltip-wrapper::after,
+  .tooltip-wrapper::before {
+    display: none;
+  }
+}
+
+/*
+  =========================================
+  ACTION BUTTONS — кнопки действий в карточках
+  =========================================
+*/
+
+.action-btn {
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.action-btn:hover {
+  background-color: var(--color-bg);
+  color: var(--color-accent);
+}
+
+.action-btn:active {
+  transform: scale(0.95);
+}
+
+.action-btn-danger:hover {
+  background-color: rgba(229, 91, 91, 0.1);
+  color: var(--color-danger);
+}
+
+/* Текстовые подписи под иконками */
+.action-btn-label {
+  font-size: 9px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  opacity: 0.8;
+}
+
+/* На десктопе скрываем подписи (есть тултипы) */
+@media (min-width: 641px) {
+  .action-btn-label {
+    display: none;
+  }
+
+  .action-btn {
+    padding: 6px;
+  }
+}
+
+/*
+  =========================================
+  IMAGE PREVIEW — превью картинок в редакторе
+  =========================================
+*/
+
+.image-preview-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+.image-preview-item {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-preview-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.7);
+  border: none;
+  color: white;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.image-preview-remove:hover {
+  background-color: var(--color-danger);
+}
+
+/*
+  =========================================
+  TOPIC IMAGES — картинки в карточке раздела
+  =========================================
+*/
+
+.topic-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.topic-image {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.topic-image:hover {
+  border-color: var(--color-accent);
+  box-shadow: 0 4px 12px rgba(217, 119, 87, 0.15);
+}
+
+/* Inline картинки в тексте [img:N] */
+.inline-image {
+  display: block;
+  max-width: 100%;
+  max-height: 300px;
+  margin: 12px 0;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: all 0.2s;
+  object-fit: contain;
+}
+
+.inline-image:hover {
+  border-color: var(--color-accent);
+  box-shadow: 0 4px 12px rgba(217, 119, 87, 0.15);
+}
+
+/* Полноэкранный просмотр */
+.image-lightbox {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+  cursor: zoom-out;
+}
+
+.image-lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+  object-fit: contain;
+}
