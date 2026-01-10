@@ -15,7 +15,7 @@
   - Обработка ошибок при работе с API
 */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Modal from '../components/Modal'
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal'
 import AlertModal from '../components/AlertModal'
@@ -43,6 +43,7 @@ import { SortableSubjectItem } from '../components/SortableSubjectItem'
 import { pluralizeSubjects } from '../utils/pluralize'
 import ColorPicker, { getColorById } from '../components/ColorPicker'
 import EmojiPicker, { getEmojiById } from '../components/EmojiPicker'
+import SearchInput, { filterBySearch } from '../components/SearchInput'
 
 function SubjectsPage() {
   // Состояния
@@ -60,6 +61,9 @@ function SubjectsPage() {
 
   // Состояние для drag-and-drop
   const [activeId, setActiveId] = useState(null)
+
+  // Состояние для поиска
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Настройка сенсоров для drag-and-drop
   const sensors = useSensors(
@@ -232,6 +236,18 @@ function SubjectsPage() {
     setEditingSubject(null)
   }
 
+  // Обработчик поиска (с useCallback для стабильной ссылки)
+  const handleSearch = useCallback((query) => {
+    setSearchQuery(query)
+  }, [])
+
+  // Фильтрация предметов по поисковому запросу
+  const filteredSubjects = filterBySearch(
+    subjects,
+    searchQuery,
+    (subject) => subject.name
+  )
+
   /*
     =========================================
     Состояние загрузки
@@ -294,6 +310,14 @@ function SubjectsPage() {
           + Добавить предмет
         </button>
 
+        {/* ===== ПОИСК ===== */}
+        {subjects.length > 0 && (
+          <SearchInput
+            onSearch={handleSearch}
+            placeholder="Поиск предметов..."
+          />
+        )}
+
         {/* ===== СПИСОК ПРЕДМЕТОВ ===== */}
         <DndContext
           sensors={sensors}
@@ -304,10 +328,10 @@ function SubjectsPage() {
         >
           <div className="space-y-3 sm:space-y-4">
             <SortableContext
-              items={subjects}
+              items={filteredSubjects}
               strategy={verticalListSortingStrategy}
             >
-              {subjects.map(subject => (
+              {filteredSubjects.map(subject => (
                 <SortableSubjectItem
                   key={subject.id}
                   subject={subject}
@@ -342,6 +366,12 @@ function SubjectsPage() {
         {subjects.length === 0 && (
           <p className="text-center text-[var(--color-text-muted)] py-8 sm:py-12 text-base sm:text-lg">
             Пока нет предметов. Добавьте первый!
+          </p>
+        )}
+
+        {subjects.length > 0 && filteredSubjects.length === 0 && searchQuery && (
+          <p className="text-center text-[var(--color-text-muted)] py-8 sm:py-12 text-base sm:text-lg">
+            Ничего не найдено по запросу «{searchQuery}»
           </p>
         )}
 

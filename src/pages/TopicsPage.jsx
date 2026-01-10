@@ -12,7 +12,7 @@
   ОБНОВЛЕНО: Теперь работает с облачным хранилищем (JSONBin.io)
 */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import Modal from '../components/Modal'
 import RichTextInput from '../components/RichTextInput'
@@ -43,6 +43,7 @@ import { SortableTopicItem } from '../components/SortableTopicItem'
 // Импортируем функцию склонения для правильной грамматики
 import { pluralizeTopics } from '../utils/pluralize'
 import { FormattedText } from '../utils/formatText'
+import SearchInput, { filterBySearch } from '../components/SearchInput'
 
 function TopicsPage() {
   const { subjectId, sectionId } = useParams()
@@ -71,6 +72,9 @@ function TopicsPage() {
 
   // Состояние для drag-and-drop
   const [activeId, setActiveId] = useState(null)
+
+  // Состояние для поиска
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Настройка сенсоров
   const sensors = useSensors(
@@ -325,6 +329,21 @@ function TopicsPage() {
     }
   }
 
+  // Обработчик поиска
+  const handleSearch = useCallback((query) => {
+    setSearchQuery(query)
+  }, [])
+
+  // Фильтрация тем по поисковому запросу (ищем в названии и тегах)
+  const filteredTopics = filterBySearch(
+    topics,
+    searchQuery,
+    (topic) => {
+      const tags = topic.tags?.join(' ') || ''
+      return `${topic.name} ${tags}`
+    }
+  )
+
   // Загрузка
   if (isLoading) {
     return (
@@ -412,6 +431,14 @@ function TopicsPage() {
           + Добавить раздел
         </button>
 
+        {/* ===== ПОИСК ===== */}
+        {topics.length > 0 && (
+          <SearchInput
+            onSearch={handleSearch}
+            placeholder="Поиск разделов..."
+          />
+        )}
+
         {/* ===== СПИСОК ТЕМ ===== */}
         <DndContext
           sensors={sensors}
@@ -422,10 +449,10 @@ function TopicsPage() {
         >
           <div className="space-y-3 sm:space-y-4">
             <SortableContext
-              items={topics}
+              items={filteredTopics}
               strategy={verticalListSortingStrategy}
             >
-              {topics.map((topic, index) => (
+              {filteredTopics.map((topic, index) => (
                 <SortableTopicItem
                   key={topic.id}
                   topic={topic}
@@ -461,6 +488,12 @@ function TopicsPage() {
         {topics.length === 0 && (
           <p className="text-center text-[var(--color-text-muted)] py-8 sm:py-12 text-base sm:text-lg">
             Пока нет разделов. Добавьте первый!
+          </p>
+        )}
+
+        {topics.length > 0 && filteredTopics.length === 0 && searchQuery && (
+          <p className="text-center text-[var(--color-text-muted)] py-8 sm:py-12 text-base sm:text-lg">
+            Ничего не найдено по запросу «{searchQuery}»
           </p>
         )}
 

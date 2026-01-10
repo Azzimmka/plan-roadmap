@@ -9,7 +9,7 @@
   ОБНОВЛЕНО: Теперь работает с облачным хранилищем (JSONBin.io)
 */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import Modal from '../components/Modal'
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal'
@@ -38,6 +38,7 @@ import { SortableSectionItem } from '../components/SortableSectionItem'
 
 // Импортируем функцию склонения для правильной грамматики
 import { pluralizeSections } from '../utils/pluralize'
+import SearchInput, { filterBySearch } from '../components/SearchInput'
 
 function SectionsPage() {
   const { subjectId } = useParams()
@@ -58,6 +59,9 @@ function SectionsPage() {
 
   // Состояние для drag-and-drop
   const [activeId, setActiveId] = useState(null)
+
+  // Состояние для поиска
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Настройка сенсоров
   const sensors = useSensors(
@@ -233,6 +237,18 @@ function SectionsPage() {
     setEditingSection(null)
   }
 
+  // Обработчик поиска
+  const handleSearch = useCallback((query) => {
+    setSearchQuery(query)
+  }, [])
+
+  // Фильтрация разделов по поисковому запросу
+  const filteredSections = filterBySearch(
+    sections,
+    searchQuery,
+    (section) => section.name
+  )
+
   // Загрузка
   if (isLoading) {
     return (
@@ -305,6 +321,14 @@ function SectionsPage() {
           + Добавить тему
         </button>
 
+        {/* ===== ПОИСК ===== */}
+        {sections.length > 0 && (
+          <SearchInput
+            onSearch={handleSearch}
+            placeholder="Поиск тем..."
+          />
+        )}
+
         {/* ===== СПИСОК РАЗДЕЛОВ ===== */}
         <DndContext
           sensors={sensors}
@@ -315,10 +339,10 @@ function SectionsPage() {
         >
           <div className="space-y-3 sm:space-y-4">
             <SortableContext
-              items={sections}
+              items={filteredSections}
               strategy={verticalListSortingStrategy}
             >
-              {sections.map(section => (
+              {filteredSections.map(section => (
                 <SortableSectionItem
                   key={section.id}
                   section={section}
@@ -344,6 +368,12 @@ function SectionsPage() {
         {sections.length === 0 && (
           <p className="text-center text-[var(--color-text-muted)] py-8 sm:py-12 text-base sm:text-lg">
             Пока нет тем. Добавьте первую!
+          </p>
+        )}
+
+        {sections.length > 0 && filteredSections.length === 0 && searchQuery && (
+          <p className="text-center text-[var(--color-text-muted)] py-8 sm:py-12 text-base sm:text-lg">
+            Ничего не найдено по запросу «{searchQuery}»
           </p>
         )}
 
