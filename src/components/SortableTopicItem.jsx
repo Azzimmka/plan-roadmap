@@ -104,7 +104,7 @@ export function SortableTopicItem({ topic, index, handleDeleteTopic, handleEditT
         </div>
 
         {/* Кнопки: заметка, редактирование, удаление */}
-        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0 self-end sm:self-start sm:pt-1">
+        <div className="flex sm:flex-col items-center gap-0.5 sm:gap-1 shrink-0 self-end sm:self-start sm:pt-1">
           {/* Кнопка заметки/ссылки */}
           <span className="tooltip-wrapper" data-tooltip="Заметка">
             <button
